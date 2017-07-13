@@ -1,2 +1,5 @@
-node_modules
-bower_components
+components
+deploy
+.DS_Store
+index.build.*
+threads.json

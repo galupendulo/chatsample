@@ -1,46 +1,56 @@
-<link rel="import" href="/bower_components/polymer/polymer.html">
-<link rel="import" href="/elements/chat-message-input.html">
-<link rel="import" href="/elements/chat-message-view.html">
-<script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
-<polymer-element name="chat-app" constructor="ChatApp">
-    <template>
-        <style>
-        :host {
-            height: 100%;
-        }
-        
-        #container {
-            position: relative;
-            width: 100%;
-            height: 100%;
-        }
-        
-        
-        </style>
-        
-        <div id="container" layout vertical>
-            <chat-message-view id="view" model="{{model}}" flex></chat-message-view>
-            <chat-message-input id="editor"></chat-message-input>
-        </div>
-        
-    </template>
-    <script>
+<!--
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../components/polymer/polymer.html">
+<link rel="import" href="../components/paper-drawer-panel/paper-drawer-panel.html">
+<link rel="import" href="../components/iron-ajax/iron-ajax.html">
+<link rel="import" href="chat-thread-list.html">
+<link rel="import" href="chat-thread-view.html">
+
+<dom-module id="chat-view">
+
+  <style>
+    :host {
+      font-family: 'Muli', 'Helvetica Neue', helvetica, arial;
+      display: block;
+    }
+  </style>
+
+  <template>
+
+    <iron-ajax url="threads.json" last-response="{{threads}}" auto></iron-ajax>
+
+    <paper-drawer-panel>
+
+      <chat-thread-list drawer user="{{user}}" threads="{{threads}}" selected-thread="{{selectedThread}}"></chat-thread-list>
+
+      <chat-thread-view main user="{{user}}" thread="{{selectedThread}}"></chat-thread-view>
+
+    </paper-drawer-panel>
+  </template>
+
+  <script>
     Polymer({
-        model: [],
-        ready: function() {
-            this.socket = io();
-            var self = this;
 
-            function sendMessage(ev) {
-                self.socket.emit('chat message', ev.detail.message);
-            }
+      is: 'chat-view',
 
-            this.$.editor.addEventListener('message', sendMessage);
+      properties: {
 
-            this.socket.on('chat message', function(msg) {
-                self.model.push(msg);
-            });
+        user: {
+          value: function() {
+            return {name: 'Kevin', lastReadMessage: {}};
+          }
         }
+
+      }
+
     });
-    </script>
-</polymer-element>
+  </script>
+
+</dom-module>
