@@ -15,18 +15,22 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 <dom-module id="chat-view">
 
-  <style>
+  <style is="custom-style">
     :host {
       font-family: 'Muli', 'Helvetica Neue', helvetica, arial;
       display: block;
+      
     }
+    
+    
+    
   </style>
 
   <template>
 
     <iron-ajax url="threads.json" last-response="{{threads}}" auto></iron-ajax>
 
-    <paper-drawer-panel>
+    <paper-drawer-panel drawer-width='0px'>
 
       <chat-thread-list drawer user="{{user}}" threads="{{threads}}" selected-thread="{{selectedThread}}"></chat-thread-list>
 

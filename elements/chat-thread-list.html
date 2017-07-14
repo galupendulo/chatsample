@@ -19,26 +19,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
   <template>
 
-    <paper-toolbar>
-      <paper-icon-button icon="inbox" id="inbox"></paper-icon-button>
-      <div class="title">Threads</div>
-      <paper-badge for="inbox" label="{{_computeUnreadCount(user.lastReadMessage.*, threads.*)}}"></paper-badge>
-    </paper-toolbar>
+    
 
-    <paper-menu selected="{{_selectedIndex}}">
-      <template is="dom-repeat" items="{{threads}}">
-        <paper-item>
-          <paper-item-body two-line>
-            <div>
-              <iron-icon icon="communication:textsms" hidden$="{{_computeThreadRead(item.messages.length, item.id, user.lastReadMessage.*)}}"></iron-icon>
-              <span>{{item.title}}</span>
-            </div>
-            <div secondary>{{item.lastMessage}}</div>
-          </paper-item-body>
-        </paper-item>
-      </template>
-    </paper-menu>
-
+    
     <array-selector id="selector" items="{{threads}}" selected-item="{{selectedThread}}"></array-selector>
 
   </template>
