@@ -9,8 +9,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 <link rel="import" href="../components/polymer/polymer.html">
 <link rel="import" href="../components/paper-drawer-panel/paper-drawer-panel.html">
-<link rel="import" href="../components/iron-ajax/iron-ajax.html">
-<link rel="import" href="chat-thread-list.html">
+
 <link rel="import" href="chat-thread-view.html">
 
 <dom-module id="chat-view">
@@ -28,13 +27,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
   <template>
 
-    <iron-ajax url="threads.json" last-response="{{threads}}" auto></iron-ajax>
+    
 
     <paper-drawer-panel drawer-width='0px'>
 
-      <chat-thread-list drawer user="{{user}}" threads="{{threads}}" selected-thread="{{selectedThread}}"></chat-thread-list>
-
-      <chat-thread-view main user="{{user}}" thread="{{selectedThread}}"></chat-thread-view>
+      <chat-thread-view main></chat-thread-view>
 
     </paper-drawer-panel>
   </template>
@@ -45,12 +42,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       is: 'chat-view',
 
       properties: {
-
-        user: {
-          value: function() {
-            return {name: 'Kevin', lastReadMessage: {}};
-          }
-        }
 
       }
 

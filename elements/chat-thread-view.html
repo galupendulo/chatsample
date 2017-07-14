@@ -12,14 +12,18 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../components/paper-menu-button/paper-menu-button.html">
 <link rel="import" href="../components/iron-icon/iron-icon.html">
+<link rel="import" href="../components/iron-input/iron-input.html">
 <link rel="import" href="../components/iron-icons/iron-icons.html">
 <link rel="import" href="../components/iron-icons/av-icons.html">
 <link rel="import" href="../components/paper-input/paper-input.html">
+<link rel="import" href="../components/paper-input/paper-input-container.html">
 <link rel="import" href="../components/paper-item/paper-item.html">
 <link rel="import" href="../components/voice-elements/dist/voice-recognition.html">
 <link rel="import" href="../components/iron-flex-layout/iron-flex-layout.html">
 <link rel="import" href="../components/paper-item/paper-item-body.html">
 <link rel="import" href="../components/paper-fab/paper-fab.html">
+<link rel="import" href="/elements/mic-icon.html">
+<link rel="import" href="/elements/api-ai-api.html">
 
 <link rel="import" href="input-header.html">
 
@@ -40,24 +44,44 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
     </style>
 
-    <input-header label="{{thread.title}}"></input-header>
+    
+    <api-ai-api id="api"
+                access-token="[[accessToken]]"
+                lang="[[lang]]"
+                session-id="[[_sessionId]]"
+                message="{{_message}}"
+                last-response="{{_response}}"
+                on-response="_handleResponse"
+    ></api-ai-api>
 
     <div class="list">
-      <template is="dom-repeat" items="{{thread.messages}}">
+      <template is="dom-repeat" items="[[_conversation]]">
         <paper-item>
           <paper-item-body two-line>
-            <div>{{item.user}}</div>
-            <div secondary>{{item.text}}</div>
+            <div>{{item.who}}</div>
+            <div secondary>{{item.message}}</div>
           </paper-item-body>
         </paper-item>
       </template>
     </div>
     
 
-    <paper-input id="input" label="New Message:" on-keyup="_handleInput">
-      <paper-icon-button icon="av:mic" suffix on-tap="_recognize"></paper-icon-button>
-    </paper-input>
-    <voice-recognition id="voice" continuous="false" on-start="_start" on-end="_finish"></voice-recognition>
+     <paper-input-container>
+      <label>[[label]]</label>
+      <input is="iron-input" bind-value="{{value}}" on-keydown="_checkForEnter">
+      <paper-icon-button suffix
+                         icon="api-ai:mic"
+                         hidden$="[[!_micAvailable(noVoice, _speechRecognition, _recording)]]"
+                         on-tap="_startRecognition"
+      ></paper-icon-button>
+      <paper-icon-button suffix
+                         icon="api-ai:mic-off"
+                         hidden$="[[!_recording]]"
+                         on-tap="_stopRecognition"
+      ></paper-icon-button>
+      <paper-icon-button suffix icon="api-ai:send" on-tap="_send"></paper-icon-button>
+    </paper-input-container>
+    <!-- <voice-recognition id="voice" continuous="false" on-start="_start" on-end="_finish"></voice-recognition> -->
   </template>
 
   <script>
@@ -67,62 +91,167 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       properties: {
 
-        thread: Object,
-
-        user: Object,
-
-        isStarted:{
-          type:Boolean,
-          value: false
-        }
-
-      },
-
-      observers: [
-
-        '_updateLastReadMessage(thread.id, thread.messages.length, user)'
-
-      ],
-
-      _updateLastReadMessage: function(id, length, user) {
-        this.set(['user.lastReadMessage', id], length);
-      },
-
-      _handleInput: function(e) {
-        if (e.keyCode == 13) {
-          this.push('thread.messages', {
-            text: e.target.value,
-            user: this.user.name
-          });
-          this.set('thread.lastMessage', e.target.value);
-          e.target.value = '';
-        }
-      },
-      _recognize:function(){
-
-        if(this.isStarted==false){
-
-          this.$.voice.start();
-          
-          this.isStarted=true;
-        }else{
-
-          this.$.voice.stop();
-           this.isStarted=false;
-
-        }
-
-      },
-      _start:function(e){
-        this.$.input.value="";
-
-          console.log('empieza',e)
+        /*
+         * Label of the input element
+         */
+        label: {
+          type: String,
+          value: 'Message to API.AI Agent'
         },
-       _finish: function(e){
-          console.log('TERMINO',this.$.voice.text);
-           this.$.input.value=this.$.voice.text;
 
+        /*
+         * Current content of the input element for two-way binding
+         */
+        value: {
+          type: String,
+          notify: true
+        },
+
+        /*
+         * Disable speech-recognition for the element
+         */
+        noVoice: {
+          type: Boolean,
+          value: false
+        },
+
+        /*
+         * Language code for speech recognition. Should match the API.AI agent's language
+         */
+        lang: {
+          type: String,
+          value: 'en'
+        },
+
+        /*
+         * true = browser supports speech recognition with the Web Speech API
+         */
+        _speechRecognition: {
+          type: Boolean,
+          value: function () {
+            return (!!window.SpeechRecognition || !!window.webkitSpeechRecognition);
+          }
+        },
+
+        /*
+         * true = Speech recogntion is currently running
+         */
+        _recording: {
+          type: Boolean,
+          value: false
+        },
+        accessToken: String,
+        lang: {
+          type: String,
+          value: 'en'
+        },
+        _sessionId: String,
+        _message: String,
+        _response: Object,
+        _conversation: {
+          type: Array,
+          value: function () {
+            return [];
+          }
         }
+
+
+      },
+
+      ready: function () {
+        this._sessionId = Math.random().toString(36).replace(/[^a-z]+/g, '');
+      },
+      _send: function () {
+        console.log('ENTRO', this.value)
+        if (!this.value) {
+          return;
+        }
+        this.unshift('_conversation', {
+          in: false,
+          who: 'You',
+          message: this.value
+        });
+        this.$.api.send();
+        this.set('value', '');
+      },
+
+      _handleResponse: function () {
+        this.unshift('_conversation', {
+          in: true,
+          who: 'API.AI',
+          message: this._response.result.fulfillment.speech
+        });
+      },
+
+     
+
+      /*
+       *  Whether to show Microphone icon or not
+       */
+      _micAvailable: function (noVoice, speechRecognition, recording) {
+        return (!noVoice && speechRecognition && !recording);
+      },
+
+      /*
+       * Start speech recognition
+       */
+      _startRecognition: function () {
+        var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        this._recognition = new SpeechRecognition();
+
+        this._recognition.onstart = function () {
+          this.set('value', '');
+          this.set('_recording', true);
+        }.bind(this);
+
+        this._recognition.onresult = function(event) {
+          var text = '';
+          for (var i = event.resultIndex; i < event.results.length; ++i) {
+            text += event.results[i][0].transcript;
+          }
+          this.set('value', text);
+          this._stopRecognition();
+        }.bind(this);
+
+        this._recognition.onend = function() {
+          this._finishRecognition();
+        }.bind(this);
+
+        this._recognition.lang = this.lang;
+        this._recognition.start();
+      },
+
+      /*
+       * Fires when a value is ready to be sent
+       *
+       * @event value-ready
+       */
+
+      /*
+       * Stop speech recognition
+       */
+      _stopRecognition: function () {
+        if (this._recognition) {
+          this._recognition.stop();
+        }
+      },
+
+      /*
+       * Clean-up after speech recognition
+       */
+      _finishRecognition: function () {
+        this._recognition = null;
+        this.set('_recording', false);
+        this._send();
+      },
+
+      _checkForEnter: function (e) {
+        if (e.keyCode === 13) {
+          this._send();
+        }
+      }
+
+     
 
     });
   </script>
