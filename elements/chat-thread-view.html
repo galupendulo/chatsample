@@ -11,11 +11,15 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../components/paper-toolbar/paper-toolbar.html">
 <link rel="import" href="../components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../components/paper-menu-button/paper-menu-button.html">
+<link rel="import" href="../components/iron-icon/iron-icon.html">
 <link rel="import" href="../components/iron-icons/iron-icons.html">
+<link rel="import" href="../components/iron-icons/av-icons.html">
 <link rel="import" href="../components/paper-input/paper-input.html">
 <link rel="import" href="../components/paper-item/paper-item.html">
+<link rel="import" href="../components/voice-elements/dist/voice-recognition.html">
 <link rel="import" href="../components/iron-flex-layout/iron-flex-layout.html">
 <link rel="import" href="../components/paper-item/paper-item-body.html">
+<link rel="import" href="../components/paper-fab/paper-fab.html">
 
 <link rel="import" href="input-header.html">
 
@@ -48,9 +52,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         </paper-item>
       </template>
     </div>
+    
 
-    <paper-input label="New Message:" on-keyup="_handleInput"></paper-input>
-
+    <paper-input id="input" label="New Message:" on-keyup="_handleInput">
+      <paper-icon-button icon="av:mic" suffix on-tap="_recognize"></paper-icon-button>
+    </paper-input>
+    <voice-recognition id="voice" continuous="false" on-start="_start" on-end="_finish"></voice-recognition>
   </template>
 
   <script>
@@ -62,7 +69,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
         thread: Object,
 
-        user: Object
+        user: Object,
+
+        isStarted:{
+          type:Boolean,
+          value: false
+        }
 
       },
 
@@ -85,7 +97,32 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           this.set('thread.lastMessage', e.target.value);
           e.target.value = '';
         }
-      }
+      },
+      _recognize:function(){
+
+        if(this.isStarted==false){
+
+          this.$.voice.start();
+          
+          this.isStarted=true;
+        }else{
+
+          this.$.voice.stop();
+           this.isStarted=false;
+
+        }
+
+      },
+      _start:function(e){
+        this.$.input.value="";
+
+          console.log('empieza',e)
+        },
+       _finish: function(e){
+          console.log('TERMINO',this.$.voice.text);
+           this.$.input.value=this.$.voice.text;
+
+        }
 
     });
   </script>

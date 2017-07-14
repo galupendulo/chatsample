@@ -17,6 +17,7 @@
     "paper-item": "PolymerElements/paper-item#^1.0.0",
     "iron-flex-layout": "PolymerElements/iron-flex-layout#^1.0.0",
     "paper-input": "PolymerElements/paper-input#^1.0.0",
-    "paper-menu-button": "PolymerElements/paper-menu-button#^1.0.0"
+    "paper-menu-button": "PolymerElements/paper-menu-button#^1.0.0",
+    "voice-elements": "^1.0.0"
   }
 }
